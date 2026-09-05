@@ -1,16 +1,14 @@
 /*
- * BSE Fastest JSON API – frontend (alert-first)
- * Uses: /alerts, /watchlist, /notification-settings, /monitor
- *
- * IMPORTANT: After deploying the worker, replace WORKER_URL below
- * with your real workers.dev URL, e.g.
- *   https://bse-fastest--jsonapi.<your-subdomain>.workers.dev
+ * BSE Fastest JSON API – frontend (V1.1)
+ * - Shows ALL recent announcements
+ * - Highlights / badges the ones that matched the watchlist (alerts)
+ * - Telegram / ntfy still only fire for watchlist matches
  */
 
-const WORKER_URL = "const WORKER_URL = "https://bse-fastest--jsonapi.daksheshpatelin.workers.dev";";
+const WORKER_URL = "https://bse-fastest--jsonapi.daksheshpatelin.workers.dev";
 
 let watchlist = [];
-let alerts = [];
+let announcements = [];
 
 function escapeHtml(str) {
   if (!str) return "";
@@ -26,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("telegramToggle").addEventListener("change", saveNotificationSettings);
   document.getElementById("ntfyToggle").addEventListener("change", saveNotificationSettings);
   document.getElementById("refreshBtn").addEventListener("click", () => {
-    loadAlerts();
+    loadAnnouncements();
     loadWatchlist();
   });
   document.getElementById("checkNowBtn").addEventListener("click", checkNow);
@@ -39,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadNotificationSettings();
   loadWatchlist();
-  loadAlerts();
+  loadAnnouncements();
 });
 
 /* ---------- notifications ---------- */
@@ -177,34 +175,35 @@ function renderWatchlist() {
   });
 }
 
-/* ---------- alerts ---------- */
+/* ---------- announcements (ALL) ---------- */
 
-async function loadAlerts() {
+async function loadAnnouncements() {
   const feedCount = document.getElementById("feedCount");
   feedCount.textContent = "Loading…";
   try {
-    const res = await fetch(`${WORKER_URL}/alerts`);
+    const res = await fetch(`${WORKER_URL}/announcements`);
     const data = await res.json();
-    alerts = data.items || [];
-    renderAlerts();
+    announcements = data.items || [];
+    renderAnnouncements();
   } catch (err) {
     console.error(err);
-    feedCount.textContent = "Failed to load alerts.";
+    feedCount.textContent = "Failed to load.";
   }
 }
 
-function renderAlerts() {
+function renderAnnouncements() {
   const feedCount = document.getElementById("feedCount");
   const results = document.getElementById("results");
-  feedCount.textContent = `${alerts.length} alert${alerts.length === 1 ? "" : "s"}`;
+  const alertCount = announcements.filter((a) => a.alert).length;
+  feedCount.textContent = `${announcements.length} announcement${announcements.length === 1 ? "" : "s"} · ${alertCount} alert${alertCount === 1 ? "" : "s"}`;
 
-  if (!alerts.length) {
+  if (!announcements.length) {
     results.innerHTML =
-      '<p class="muted empty">No alerts yet. Add scrips to the watchlist — new matching announcements will appear here and on Telegram/ntfy.</p>';
+      '<p class="muted empty">No announcements yet. Click “⚡ Check now” to fetch the latest from BSE. Watchlist matches will be marked ALERT and sent to Telegram/ntfy.</p>';
     return;
   }
 
-  results.innerHTML = alerts
+  results.innerHTML = announcements
     .map((item) => {
       const fmt = (iso) => {
         if (!iso) return "—";
@@ -215,14 +214,18 @@ function renderAlerts() {
         }
       };
       const published = fmt(item.pubDate);
-      const fetched = fmt(item.fetchedAt || item.alertCreatedAt);
+      const fetched = fmt(item.fetchedAt);
       const link = item.link
         ? `<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener">Attachment / details</a>`
         : "";
+      const alertBadge = item.alert
+        ? `<span class="badge alert">ALERT</span>`
+        : "";
       return `
-      <article class="alert-card">
+      <article class="alert-card ${item.alert ? "is-alert" : ""}">
         <div class="alert-top">
           <strong>${escapeHtml(item.company || "Company")} ${item.scrip ? `(${escapeHtml(item.scrip)})` : ""}</strong>
+          ${alertBadge}
         </div>
         <p class="title">${escapeHtml(item.title || "Announcement")}</p>
         <div class="meta">
@@ -248,7 +251,7 @@ async function checkNow() {
     last.textContent = `Last check: ${new Date().toLocaleTimeString("en-IN", {
       timeZone: "Asia/Kolkata",
     })} · new ${data.newAnnouncements || 0} · alerts ${data.newAlerts || 0}`;
-    await loadAlerts();
+    await loadAnnouncements();
   } catch (err) {
     console.error(err);
     last.textContent = "Last check failed.";

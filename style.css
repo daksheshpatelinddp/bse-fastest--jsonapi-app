@@ -176,3 +176,21 @@ body {
   margin: 0.35rem 0 0.5rem;
 }
 .meta b { color: var(--text); font-weight: 600; }
+
+/* Alert badge */
+.badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  letter-spacing: 0.03em;
+}
+.badge.alert {
+  background: #ef4444;
+  color: #fff;
+}
+.alert-card.is-alert {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.25);
+}
