@@ -83,17 +83,29 @@ async function loadWatchlist() {
   }
 }
 
+let saveWatchlistTimer = null;
+
 async function saveWatchlist() {
-  renderWatchlist();
-  try {
-    await fetch(`${WORKER_URL}/watchlist`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ watchlist }),
-    });
-  } catch (err) {
-    console.error(err);
-  }
+  renderWatchlist(); // instant UI feedback, unaffected by the debounce below
+
+  // Coalesce rapid successive edits (fast typing + Enter, quick taps,
+  // a big CSV batch) into a single network write. Without this, two
+  // edits landing within the same second can both try to write the
+  // "watchlist" KV key at once — Workers KV only allows 1 write/sec
+  // per key, so the second one gets rejected and silently lost.
+  if (saveWatchlistTimer) clearTimeout(saveWatchlistTimer);
+  saveWatchlistTimer = setTimeout(async () => {
+    saveWatchlistTimer = null;
+    try {
+      await fetch(`${WORKER_URL}/watchlist`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ watchlist }),
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }, 700);
 }
 
 function addWatchlistItem() {
