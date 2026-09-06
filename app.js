@@ -175,7 +175,7 @@ function renderWatchlist() {
   });
 }
 
-/* ---------- announcements (ALL) ---------- */
+/* ---------- announcements (watchlist matches only, last 50) ---------- */
 
 async function loadAnnouncements() {
   const feedCount = document.getElementById("feedCount");
@@ -194,12 +194,11 @@ async function loadAnnouncements() {
 function renderAnnouncements() {
   const feedCount = document.getElementById("feedCount");
   const results = document.getElementById("results");
-  const alertCount = announcements.filter((a) => a.alert).length;
-  feedCount.textContent = `${announcements.length} announcement${announcements.length === 1 ? "" : "s"} · ${alertCount} alert${alertCount === 1 ? "" : "s"}`;
+  feedCount.textContent = `${announcements.length} alert${announcements.length === 1 ? "" : "s"}`;
 
   if (!announcements.length) {
     results.innerHTML =
-      '<p class="muted empty">No announcements yet. Click “⚡ Check now” to fetch the latest from BSE. Watchlist matches will be marked ALERT and sent to Telegram/ntfy.</p>';
+      '<p class="muted empty">No alerts yet. Click “⚡ Check now” to poll BSE. Only announcements matching your watchlist appear here and are sent to Telegram/ntfy.</p>';
     return;
   }
 
