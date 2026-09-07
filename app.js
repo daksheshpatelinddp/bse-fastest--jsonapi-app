@@ -1,10 +1,11 @@
 /*
- * BSE XML RSS – frontend (V1.2)
- * - Shows watchlist-matched announcements only (last 50)
- * - Telegram / ntfy fire for watchlist matches
+ * BSE Fastest JSON API – frontend (V1.1)
+ * - Shows ALL recent announcements
+ * - Highlights / badges the ones that matched the watchlist (alerts)
+ * - Telegram / ntfy still only fire for watchlist matches
  */
 
-const WORKER_URL = "https://bse-xml-rss.daksheshpatelin.workers.dev"; // ← keep your real worker URL
+const WORKER_URL = "https://bse-fastest--jsonapi.daksheshpatelin.workers.dev";
 
 let watchlist = [];
 let announcements = [];
@@ -209,7 +210,7 @@ function renderAnnouncements() {
 
   if (!announcements.length) {
     results.innerHTML =
-      '<p class="muted empty">No alerts yet. Click “⚡ Check now” to poll BSE RSS. Only announcements matching your watchlist appear here and are sent to Telegram/ntfy.</p>';
+      '<p class="muted empty">No alerts yet. Click “⚡ Check now” to poll BSE. Only announcements matching your watchlist appear here and are sent to Telegram/ntfy.</p>';
     return;
   }
 
